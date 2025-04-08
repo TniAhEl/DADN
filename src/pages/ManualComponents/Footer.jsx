@@ -3,24 +3,22 @@ import logo from '../../assets/hcmut.png'; // Đảm bảo rằng bạn đã đ�
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-700 text-white py-4">
+    <footer className="bg-gray-700 text-white py-6">
       <div className="container mx-auto flex flex-col items-center">
-        <div className="flex justify-between w-full mb-4">
-        <div>
-          <div className="flex items-center">
-            <img src={logo} alt="HCMUT Logo" className="h-14 mr-5" />
+        <div className="flex flex-col items-center mb-4">
+          <div className="flex items-center mb-2">
+            <img src={logo} alt="HCMUT Logo" className="h-14 mr-4" />
             <p className="text-lg font-bold">Smart water</p>
           </div>
-          <p className="text-center">&copy; 2025 Smart water. All rights reserved.</p>
-          </div>
-          <nav>
-            <ul className="flex space-x-10">
-              <li><a href="/privacy-policy" className="hover:underline">Privacy Policy</a></li>
-              <li><a href="/terms-of-service" className="hover:underline">Terms of Service</a></li>
-              <li><a href="/contact" className="hover:underline">Contact</a></li>
-            </ul>
-          </nav>
+          <p className="text-center text-gray-400">&copy; 2025 Smart water. All rights reserved.</p>
         </div>
+        <nav className="w-full">
+          <ul className="flex justify-center space-x-8 text-sm">
+            <li><a href="/privacy-policy" className="hover:underline hover:text-blue-400">Privacy Policy</a></li>
+            <li><a href="/terms-of-service" className="hover:underline hover:text-blue-400">Terms of Service</a></li>
+            <li><a href="/contact" className="hover:underline hover:text-blue-400">Contact</a></li>
+          </ul>
+        </nav>
       </div>
     </footer>
   );
