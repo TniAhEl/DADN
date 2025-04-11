@@ -5,6 +5,7 @@ import Devices from '../pages/Devices/Devices';
 import Reports from '../pages/Reports/Reports';
 import Schedule from '../pages/Schedule/Schedule';
 import User from '../pages/Authentication/User'
+import Admin from '../pages/Authentication/Admin';
 
 export const router = createBrowserRouter([
     {
@@ -35,6 +36,11 @@ export const router = createBrowserRouter([
     {
         path: '/account',
         element: <User />,
+        
+    },
+    {
+        path: '/admin',
+        element: <Admin />,
         
     },
 ]);
