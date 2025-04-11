@@ -37,6 +37,7 @@ const Reports = () => {
                 <th className="px-4 py-2 text-left border">ID</th>
                 <th className="px-4 py-2 text-left border">Tên báo cáo</th>
                 <th className="px-4 py-2 text-left border">Trạng thái</th>
+                <th className="px-4 py-2 text-left border">Trị số</th>
                 <th className="px-4 py-2 text-left border">Ngày</th>
               </tr>
             </thead>
@@ -50,6 +51,7 @@ const Reports = () => {
                   <td className="px-4 py-2 border">{report.id}</td>
                   <td className="px-4 py-2 border">{report.name}</td>
                   <td className="px-4 py-2 border">{report.status}</td>
+                  <td className="px-4 py-2 border">{report.value}</td>
                   <td className="px-4 py-2 border">{report.date}</td>
                 </tr>
               ))}
