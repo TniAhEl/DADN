@@ -44,7 +44,7 @@ const Login = () => {
           <div className="mb-6 text-center">
             <h2 className="text-4xl font-bold text-[#52ACFF]">Đăng nhập</h2>
             <p className="text-lg text-gray-600 mt-2">
-              {params.userType === "admin" ? "Quản trị viên" : "Khách hàng"}
+              {params.userType === "admin" ? "Quản trị viên" : "Quản trị viên"}
             </p>
           </div>
 
