@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Header from "../ManualComponents/Header";
-import Footer from "../ManualComponents/Footer";
-import Sidebar from "../ManualComponents/Sidebar";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import Sidebar from "../../components/Sidebar";
 import DevicesCard from "./DevicesCard";
 import SensorChart from "../../components/SensorChart";
 import Loading from "../../components/Loading";

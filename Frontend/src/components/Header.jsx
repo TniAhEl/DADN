@@ -1,6 +1,6 @@
 import React from "react";
 import { FaSignOutAlt } from "react-icons/fa"; // Import biểu tượng đăng xuất từ react-icons
-import logo from "../../assets/hcmut.png"; // Import logo
+import logo from "../assets/hcmut.png"; // Import logo
 
 const Header = () => {
   return (

@@ -7,6 +7,9 @@ import Schedule from "../pages/Schedule/Schedule";
 import User from "../pages/Authentication/User";
 import Admin from "../pages/Authentication/Admin";
 import ConfigDevice from "../pages/Configdevice/ConfigDevice";
+import HomePage from "../pages/HomePage/HomePage";
+import Login from "../pages/Login/Login";
+import SignUp from "../pages/SignUp/SignUp";
 
 export const router = createBrowserRouter([
   {
@@ -40,5 +43,17 @@ export const router = createBrowserRouter([
   {
     path: "/configdevice",
     element: <ConfigDevice />,
+  },
+  {
+    path: "/login-as",
+    element: <HomePage />,
+  },
+  {
+    path: "/login/:role",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <SignUp />,
   },
 ]);
