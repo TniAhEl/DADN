@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+import Header from "../ManualComponents/Header";
+import Footer from "../ManualComponents/Footer";
+import Sidebar from "../ManualComponents/Sidebar";
 import ReportsCard from "./ReportsCards";
 import Graph from "../../components/Graph";
 

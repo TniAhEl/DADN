@@ -1,7 +1,7 @@
 import React from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+import Header from "../ManualComponents/Header";
+import Footer from "../ManualComponents/Footer";
+import Sidebar from "../ManualComponents/Sidebar";
 import BubbleIcon from "../../components/BubbleIcon";
 // import NotificationButton from "../components/NotificationButton";
 import waterImage from "../../assets/water1.jpg"; // Import hình ảnh nước từ thư mục assets

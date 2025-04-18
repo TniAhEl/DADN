@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Sidebar from "../../components/Sidebar";
+import Header from "../ManualComponents/Header";
+import Footer from "../ManualComponents/Footer";
+import Sidebar from "../ManualComponents/Sidebar";
 import DevicesCard from "./DevicesCard";
 import SensorChart from "../../components/SensorChart";
 import Loading from "../../components/Loading";
@@ -76,35 +76,39 @@ const Devices = () => {
 
     const fetchAllChartData = async () => {
       try {
-        const now = new Date();
-        const labels = Array.from({ length: 12 }, (_, i) => {
-          const time = new Date(now.getTime() - (11 - i) * 60 * 60 * 1000);
-          return `${time.getHours()}:00`;
-        });
-
+        const [tempRes, moistureRes, lightRes, soilRes] = await Promise.all([
+          fetch("http://localhost:3000/api/v1/dht-temp"),
+          fetch("http://localhost:3000/api/v1/dht-moisure"),
+          fetch("http://localhost:3000/api/v1/light-sensor"),
+          fetch("http://localhost:3000/api/v1/soil-moisure"),
+        ]);
+    
+        const tempData = await tempRes.json();
+        const moistureData = await moistureRes.json();
+        const lightData = await lightRes.json();
+        const soilData = await soilRes.json();
+    
+        const transformData = (raw) => {
+          const sliced = raw.data.slice(0, 12).reverse(); // lấy 12 bản ghi mới nhất và đảo chiều cho đúng thời gian
+        
+          return {
+            labels: sliced.map((item) =>
+              new Date(item.created_at).toLocaleTimeString("vi-VN")
+            ),
+            values: sliced.map((item) => Number(item.value)),
+          };
+        };
+    
         setChartData({
-          temperature: {
-            labels,
-            values: generateMockData(25, 5, labels.length),
-          },
-          moisture: {
-            labels,
-            values: generateMockData(60, 15, labels.length),
-          },
-          light: {
-            labels,
-            values: generateMockData(50, 30, labels.length),
-          },
-          soil: {
-            labels,
-            values: generateMockData(70, 10, labels.length),
-          },
+          temperature: transformData(tempData),
+          moisture: transformData(moistureData),
+          light: transformData(lightData),
+          soil: transformData(soilData),
         });
       } catch (error) {
         console.error("Error fetching chart data:", error);
       }
     };
-
     fetchData();
 
     const intervalId = setInterval(() => {
