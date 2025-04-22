@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
     // ✅ Thêm các trường bổ sung
     name: { type: String, default: null },
     phone: { type: String, default: null },
-    role: { type: String, default: null },
+    role: { type: String, default: "customer" },
     address: { type: String, default: null },
     department: { type: String, default: null },
     joinDate: { type: String, default: null },

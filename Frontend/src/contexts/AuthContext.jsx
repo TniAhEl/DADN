@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }) => {
             } else {
               setUserPermissions(ROLES.CUSTOMER);
             }
-          } else {
+          } else if (response.status === 401) {
             clearAuthCookies();
           }
         }
@@ -171,7 +171,7 @@ export const AuthProvider = ({ children }) => {
             phone: userData.phone,
             address: userData.address,
             birth: userData.birth,
-            userType: userData.userType || "customer", // Mặc định là customer
+            role: userData.userType || "customer",
           }),
         }
       );

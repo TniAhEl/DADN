@@ -4,9 +4,9 @@ import {
   FaTools,
   FaChartBar,
   FaCalendarAlt,
-  FaSignOutAlt,
   FaUsersCog,
 } from "react-icons/fa";
+import { GrConfigure } from "react-icons/gr";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -76,7 +76,7 @@ const Sidebar = () => {
                 location.pathname === "/configdevice" ? "bg-blue-500" : ""
               }`}
             >
-              <FaCalendarAlt className="mr-2" />
+              <GrConfigure className="mr-2" />
               <span>Điều chỉnh</span>
             </Link>
           </li>
@@ -102,7 +102,7 @@ const Sidebar = () => {
                 }`}
               >
                 <FaUsersCog className="mr-2" />
-                <span>Quản lý người dùng</span>
+                <span>User Management</span>
               </Link>
             </li>
           )}

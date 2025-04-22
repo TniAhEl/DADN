@@ -34,6 +34,8 @@ const User = () => {
       setUserInfo(currentUser);
     }
   }, [currentUser]);
+  const username = currentUser.username;
+  console.log("User identifier:", currentUser.name, username);
 
   const showNotification = (message, type = "success") => {
     setNotification({
@@ -51,14 +53,13 @@ const User = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Kiểm tra quyền trước khi thực hiện
-    if (!hasPermission(PERMISSIONS.EDIT_PROFILE)) {
-      showNotification("Bạn không có quyền chỉnh sửa hồ sơ", "error");
+    const username = currentUser.username; // Chắc chắn rằng 'username' tồn tại
+    console.log("Using username:", username); // Kiểm tra username
+    if (!username) {
+      showNotification("Không tìm thấy username", "error");
       setIsLoading(false);
-      setIsModalOpen(false);
       return;
     }
-
     const updatedInfo = {
       name: e.target.name.value,
       email: e.target.email.value,
@@ -70,9 +71,9 @@ const User = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/v1/auth/user/${
-          currentUser.name || currentUser.username
-        }`,
+        `http://localhost:3000/api/v1/auth/user/${encodeURIComponent(
+          username
+        )}`,
         {
           method: "PUT",
           headers: {
@@ -87,6 +88,8 @@ const User = () => {
         setUserInfo(result.user || { ...userInfo, ...updatedInfo });
         showNotification("Cập nhật thành công!", "success");
       } else {
+        console.error(result.message || "Cập nhật thất bại");
+        showNotification(result.message || "Cập nhật thất bại");
         throw new Error(result.message || "Cập nhật thất bại");
       }
     } catch (error) {

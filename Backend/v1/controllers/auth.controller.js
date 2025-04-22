@@ -13,6 +13,8 @@ module.exports.register = async (req, res) => {
       birth,
       phone,
       address,
+      role: "customer", // Mặc định là user
+      userType: "customer", // Mặc định là customer
     });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });
