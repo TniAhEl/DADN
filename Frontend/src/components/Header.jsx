@@ -1,8 +1,14 @@
 import React from "react";
 import { FaSignOutAlt } from "react-icons/fa"; // Import biểu tượng đăng xuất từ react-icons
 import logo from "../assets/hcmut.png"; // Import logo
-
+import { useAuth } from "../contexts/AuthContext";
 const Header = () => {
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout(); // Hàm logout trong AuthContext sẽ xử lý việc chuyển hướng
+  };
+
   return (
     <header className="bg-gray-700 text-white py-4">
       <div className="container mx-auto flex justify-between items-center">
@@ -17,14 +23,14 @@ const Header = () => {
         </div>
 
         {/* Biểu tượng đăng xuất nằm ở bên phải và cách mép phải */}
-        <div className="flex items-center space-x-2 ml-auto">
-          <a
-            href="/"
-            className="text-white hover:underline flex items-center mr-5"
+        <div className=" mx-3 border-t border-gray-700">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full hover:bg-red-500 bg-red-600 px-3 py-2 rounded transition-colors"
           >
-            <FaSignOutAlt className="mr-2" /> {/* Biểu tượng đăng xuất */}
-            Đăng xuất
-          </a>
+            <FaSignOutAlt className="mr-2" />
+            <span>Đăng xuất</span>
+          </button>
         </div>
       </div>
     </header>

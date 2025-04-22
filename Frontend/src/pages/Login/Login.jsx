@@ -1,20 +1,45 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import avatar from "../../assets/picture/water.png";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
-  const [users, setUsers] = useState([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [warning, setWarning] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  const { login, authError, setAuthError } = useAuth();
+
+  const { userType } = useParams();
+  const location = useLocation();
+  const logType = location.state?.logType || userType;
   const navigate = useNavigate();
-  const params = useParams();
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    setAuthError("");
+  }, [setAuthError]);
+  useEffect(() => {
+    if (!userType) {
+      navigate("/login-as");
+    }
+  }, [userType, navigate]);
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const result = await login(username, password, logType);
+      if (!result.success) {
+        // Login thất bại - đã được xử lý trong login function
+      }
+    } catch (error) {
+      console.error("Lỗi đăng nhập:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,7 +69,7 @@ const Login = () => {
           <div className="mb-6 text-center">
             <h2 className="text-4xl font-bold text-[#52ACFF]">Đăng nhập</h2>
             <p className="text-lg text-gray-600 mt-2">
-              {params.userType === "admin" ? "Quản trị viên" : "Quản trị viên"}
+              {logType === "admin" ? "Quản trị viên" : "Khách hàng"}
             </p>
           </div>
 
@@ -83,17 +108,16 @@ const Login = () => {
               </div>
             </div>
 
-            {warning && (
-              <div className="text-red-500 text-sm -mt-2">
-                Sai tên đăng nhập hoặc mật khẩu
-              </div>
+            {authError && (
+              <div className="text-red-500 text-sm -mt-2">{authError}</div>
             )}
 
             <button
               type="submit"
               className="w-full py-3 bg-[#0D986A] hover:bg-[#0B8459] text-white rounded-full font-semibold text-lg shadow-lg transition-all duration-300"
+              disabled={isLoading}
             >
-              Đăng nhập
+              {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
 
@@ -104,6 +128,15 @@ const Login = () => {
               className="text-green-700 hover:underline font-medium"
             >
               Yêu cầu đăng ký tài khoản!
+            </Link>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Link
+              to="/login-as"
+              className="text-blue-500 hover:underline text-sm"
+            >
+              Quay lại trang chọn vai trò
             </Link>
           </div>
         </div>

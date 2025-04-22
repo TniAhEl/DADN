@@ -2,14 +2,10 @@ import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import avatar from "../../assets/picture/water.png";
 
-const HomePage = () => {
+const LangdingPage = () => {
   const navigate = useNavigate();
   const handleClick = (value) => {
-    navigate(`/login/${value}`, {
-      state: {
-        logType: value,
-      },
-    });
+    navigate(`/login/${value}`);
   };
 
   return (
@@ -89,4 +85,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default LangdingPage;

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import avatar from "../../assets/picture/water.png";
+import { useAuth } from "../../contexts/AuthContext";
 
 const SignUp = () => {
-  const [users, setUsers] = useState([]);
-
   const [name, setName] = useState("");
   const [birth, setBirth] = useState("");
   const [address, setAddress] = useState("");
@@ -19,21 +18,29 @@ const SignUp = () => {
   const [eEmail, setEEmail] = useState(false);
   const [ePhone, setEPhone] = useState(false);
   const [fill, setFill] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register, authError, setAuthError } = useAuth();
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const data = {
-      name,
-      date: birth,
-      address,
-      email,
-      phone,
-      account: username,
-      password,
-    };
+  useEffect(() => {
+    setAuthError("");
+  }, [setAuthError]);
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+  const validatePhone = (phone) => {
+    const re = /^[0-9]{10,11}$/;
+    return re.test(phone);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Kiểm tra form đầy đủ thông tin
     if (
       !name ||
       !birth ||
@@ -47,10 +54,59 @@ const SignUp = () => {
       return;
     }
 
-    setSuccess(true);
-    setTimeout(() => {
-      navigate("/login-as");
-    }, 2000);
+    // Reset các thông báo lỗi
+    setFill(false);
+    setEEmail(false);
+    setEPhone(false);
+    setEAccount(false);
+
+    // Validate email và phone
+    if (!validateEmail(email)) {
+      setEEmail(true);
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      setEPhone(true);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Đăng ký tài khoản mới với thông tin từ form
+      const userData = {
+        name,
+        birth,
+        address,
+        email,
+        phone,
+        username,
+        password,
+      };
+
+      const result = await register(userData);
+
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        // Xử lý lỗi dựa trên message từ server
+        if (result.message.includes("username")) {
+          setEAccount(true);
+        } else if (result.message.includes("email")) {
+          setEEmail(true);
+        } else if (result.message.includes("phone")) {
+          setEPhone(true);
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi đăng ký:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -228,7 +284,9 @@ const SignUp = () => {
                   />
                 </div>
                 {eEmail && (
-                  <p className="text-red-500 text-xs mt-1">Email đã tồn tại</p>
+                  <p className="text-red-500 text-xs mt-1">
+                    Email không hợp lệ hoặc đã tồn tại
+                  </p>
                 )}
               </div>
 
@@ -251,7 +309,7 @@ const SignUp = () => {
                 </div>
                 {ePhone && (
                   <p className="text-red-500 text-xs mt-1">
-                    Số điện thoại đã tồn tại
+                    Số điện thoại không hợp lệ hoặc đã tồn tại
                   </p>
                 )}
               </div>
@@ -288,7 +346,7 @@ const SignUp = () => {
               <div
                 className="w-full px-4 py-3 bg-[#F5F5F5] text-sm rounded-xl border border-transparent 
                focus:outline-none focus:ring-2 focus:ring-[#0D986A] focus:bg-white 
-               transition-all duration-200 placeholder-gray-400"
+               transition-all duration-200 placeholder-gray-400 relative"
               >
                 <input
                   type={showPassword ? "text" : "password"}
@@ -300,13 +358,57 @@ const SignUp = () => {
                 <div
                   className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
-                ></div>
+                >
+                  {showPassword ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-gray-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </div>
               </div>
             </div>
 
             {fill && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
                 <p className="text-red-700">Vui lòng điền đầy đủ thông tin</p>
+              </div>
+            )}
+
+            {authError && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                <p className="text-red-700">{authError}</p>
               </div>
             )}
 
@@ -324,8 +426,9 @@ const SignUp = () => {
                 className="bg-[#0D986A] text-white py-3 px-6 rounded-2xl font-medium 
                 shadow-[0px_8px_28px_0px_rgba(79,117,105,0.5)] hover:bg-[#0B8459] transition-all duration-300 
                 flex-1 sm:flex-initial sm:min-w-[180px]"
+                disabled={isLoading}
               >
-                Gửi yêu cầu
+                {isLoading ? "Đang xử lý..." : "Gửi yêu cầu"}
               </button>
 
               <button
@@ -333,7 +436,7 @@ const SignUp = () => {
                 className="border-2 border-[#df4d13d2] text-[#df4d13d2] py-3 px-6 rounded-2xl font-medium
                 hover:bg-green-50 transition-all duration-300
                 flex-1 sm:flex-initial sm:min-w-[180px]"
-                onClick={() => navigate("/login-as")}
+                onClick={() => navigate("/login")}
               >
                 Hủy
               </button>

@@ -1,123 +1,16 @@
 import React, { useState, useEffect } from "react";
-import Header from "../ManualComponents/Header";
-import Footer from "../ManualComponents/Footer";
-import Sidebar from "../ManualComponents/Sidebar";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import Sidebar from "../../components/Sidebar";
 import DevicesCard from "./DevicesCard";
 import SensorChart from "../../components/SensorChart";
 import Loading from "../../components/Loading";
+import { useSensorData } from "../../hooks/useSensorData";
 
 const Devices = () => {
-  // Lưu trữ các thông tin của sensor ở dạng object
-  const [data, setData] = useState({
-    temperature: { value: 0, feedId: "", createdAt: new Date() },
-    moisture: { value: 0, feedId: "", createdAt: new Date() },
-    light: { value: 0, feedId: "", createdAt: new Date() },
-    soil: { value: 0, feedId: "", createdAt: new Date() },
-  });
-  const [loading, setLoading] = useState(true);
-
   const [selectedChart, setSelectedChart] = useState("temperature");
-  const [chartData, setChartData] = useState({
-    temperature: { labels: [], values: [] },
-    moisture: { labels: [], values: [] },
-    light: { labels: [], values: [] },
-    soil: { labels: [], values: [] },
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tempRes, moistureRes, lightRes, soilRes] = await Promise.all([
-          fetch("http://localhost:3000/api/v1/dht-temp/latest"),
-          fetch("http://localhost:3000/api/v1/dht-moisure/latest"),
-          fetch("http://localhost:3000/api/v1/light-sensor/latest"),
-          fetch("http://localhost:3000/api/v1/soil-moisure/latest"),
-        ]);
-
-        if (!tempRes.ok || !moistureRes.ok || !lightRes.ok || !soilRes.ok) {
-          throw new Error("Một hoặc nhiều API trả về lỗi");
-        }
-
-        const tempData = await tempRes.json();
-        const moistureData = await moistureRes.json();
-        const lightData = await lightRes.json();
-        const soilData = await soilRes.json();
-
-        setData({
-          temperature: {
-            value: Number(tempData.data.value),
-            feedId: tempData.data.feed_id,
-            createdAt: tempData.data.created_at,
-          },
-          moisture: {
-            value: Number(moistureData.data.value),
-            feedId: moistureData.data.feed_id,
-            createdAt: moistureData.data.created_at,
-          },
-          light: {
-            value: Number(lightData.data.value),
-            feedId: lightData.data.feed_id,
-            createdAt: lightData.data.created_at,
-          },
-          soil: {
-            value: Number(soilData.data.value),
-            feedId: soilData.data.feed_id,
-            createdAt: soilData.data.created_at,
-          },
-        });
-
-        fetchAllChartData();
-      } catch (error) {
-        console.error("Error fetching sensor data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchAllChartData = async () => {
-      try {
-        const [tempRes, moistureRes, lightRes, soilRes] = await Promise.all([
-          fetch("http://localhost:3000/api/v1/dht-temp"),
-          fetch("http://localhost:3000/api/v1/dht-moisure"),
-          fetch("http://localhost:3000/api/v1/light-sensor"),
-          fetch("http://localhost:3000/api/v1/soil-moisure"),
-        ]);
-    
-        const tempData = await tempRes.json();
-        const moistureData = await moistureRes.json();
-        const lightData = await lightRes.json();
-        const soilData = await soilRes.json();
-    
-        const transformData = (raw) => {
-          const sliced = raw.data.slice(0, 12).reverse(); // lấy 12 bản ghi mới nhất và đảo chiều cho đúng thời gian
-        
-          return {
-            labels: sliced.map((item) =>
-              new Date(item.created_at).toLocaleTimeString("vi-VN")
-            ),
-            values: sliced.map((item) => Number(item.value)),
-          };
-        };
-    
-        setChartData({
-          temperature: transformData(tempData),
-          moisture: transformData(moistureData),
-          light: transformData(lightData),
-          soil: transformData(soilData),
-        });
-      } catch (error) {
-        console.error("Error fetching chart data:", error);
-      }
-    };
-    fetchData();
-
-    const intervalId = setInterval(() => {
-      fetchData();
-    }, 60000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
+  const { data, chartData, loading, error, refreshData } = useSensorData();
+  const { temperature, moisture, light, soil } = data;
   const generateMockData = (baseValue, variance, length) => {
     return Array.from({ length }, (_, i) => {
       const hour = i % 24;
@@ -127,8 +20,6 @@ const Devices = () => {
       return Math.round(baseValue + timeInfluence + randomness);
     });
   };
-
-  const { temperature, moisture, light, soil } = data;
 
   const cards = [
     {
@@ -200,15 +91,31 @@ const Devices = () => {
     },
   };
 
-  if (loading) {
-    return <Loading />; // Hiển thị Loading nếu đang tải dữ liệu
+  if (loading && Object.values(data).every((sensor) => sensor.value === 0)) {
+    return <Loading />;
   }
+  // if (error) {
+  //   return (
+  //     <div className="flex min-h-screen justify-center items-center">
+  //       <div className="bg-red-100 p-4 rounded-lg">
+  //         <p className="text-red-700">Lỗi: {error}</p>
+  //         <button
+  //           onClick={refreshData}
+  //           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+  //         >
+  //           Thử lại
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar className="w-1/6 min-h-screen bg-gray-800 text-white" />
+      <Sidebar className="w-1/6 min-h-screen bg-gray-800 text-white fixed top-0 left-0 z-50" />
+
       <div className="flex flex-col w-5/6">
-        <Header className="w-full bg-blue-500 text-white p-4" />
+        <Header className="w-full bg-blue-500 text-white p-4 " />
         <main className="flex-grow container mx-auto py-8 px-4">
           <h1 className="text-2xl font-bold mb-6 text-[#5f6fff]">
             Bảng điều khiển thiết bị
