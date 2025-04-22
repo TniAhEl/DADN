@@ -2,7 +2,16 @@ const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 
 module.exports.register = async (req, res) => {
-  const { username, password, email, name, birth, phone, address } = req.body;
+  const {
+    username,
+    password,
+    email,
+    name,
+    birth,
+    phone,
+    address,
+    role = "customer",
+  } = req.body;
   try {
     const hash = await bcrypt.hash(password, 10);
     const newUser = new User({
@@ -13,8 +22,8 @@ module.exports.register = async (req, res) => {
       birth,
       phone,
       address,
-      role: "customer", // Mặc định là user
-      userType: "customer", // Mặc định là customer
+      role, // Mặc định là user
+      userType: role === "admin" ? "admin" : "customer", // Mặc định là customer
     });
     await newUser.save();
     res.status(201).json({ message: "User registered successfully" });

@@ -51,7 +51,7 @@ export const ROLES = {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState([]);
-  const [userType, setUserType] = useState(null); // admin hoặc customer/user
+  const [userType, setUserType] = useState("customer"); // admin hoặc customer/user
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState("");
 
@@ -61,13 +61,9 @@ export const AuthProvider = ({ children }) => {
     const checkLoggedInUser = async () => {
       try {
         const username = getCookie("user_name");
-        const storedUserType = getCookie("user_type");
 
         if (username) {
           // Lưu user type
-          if (storedUserType) {
-            setUserType(storedUserType);
-          }
 
           // Fetch user info from API
           const response = await fetch(
@@ -76,8 +72,10 @@ export const AuthProvider = ({ children }) => {
           if (response.ok) {
             const userData = await response.json();
             setCurrentUser(userData);
+            const role = userData.role;
+            setUserType(role); // Lưu user type từ API
 
-            if (storedUserType === "admin") {
+            if (role === "admin") {
               setUserPermissions(ROLES.ADMIN);
             } else {
               setUserPermissions(ROLES.CUSTOMER);
@@ -171,7 +169,7 @@ export const AuthProvider = ({ children }) => {
             phone: userData.phone,
             address: userData.address,
             birth: userData.birth,
-            role: userData.userType || "customer",
+            role: userData.role || "customer",
           }),
         }
       );
