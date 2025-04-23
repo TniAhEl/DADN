@@ -14,102 +14,61 @@ const Sidebar = () => {
   const location = useLocation();
   const { isAdmin, currentUser } = useAuth();
 
+  const navItems = [
+    { to: "/account", icon: <FaUser />, label: "Tài khoản" },
+    { to: "/devices", icon: <FaTools />, label: "Thiết bị" },
+    { to: "/reports", icon: <FaChartBar />, label: "Báo cáo" },
+    { to: "/configdevice", icon: <GrConfigure />, label: "Điều chỉnh" },
+    { to: "/schedule", icon: <FaCalendarAlt />, label: "Lập Lịch" },
+  ];
+
+  if (isAdmin && isAdmin()) {
+    navItems.push({
+      to: "/admin",
+      icon: <FaUsersCog />,
+      label: "User Management",
+    });
+  }
+
   return (
-    <div className="min-h-screen bg-gray-800 text-white w-1/6 flex flex-col">
+    <div className="min-h-screen bg-gray-800 text-white w-1/6 flex flex-col shadow-lg">
       {/* Header */}
-      <div className="flex items-center bg-gray-500 justify-center h-18 border-b border-gray-700 p-4">
-        <a href="/" className="text-xl font-semibold">
-          DASHBOARD
-        </a>
+      <div className="flex items-center justify-center h-16 bg-gray-800 border-b border-zinc-700 shadow-md">
+        <Link to="/" className="text-2xl font-bold tracking-wide text-white">
+          SMART WATER
+        </Link>
       </div>
 
-      {/* User info */}
+      {/* User Info */}
       {currentUser && (
-        <div className="px-4 py-3 border-b border-gray-700 ">
-          <div className="font-semibold text-white mx-auto ">Xin chào</div>
-          <div className="text-sm text-white">
+        <div className="px-4 py-3 border-b border-zinc-700 bg-gray-800">
+          <div className="text-sm text-zinc-300">Xin chào,</div>
+          <div className="text-md font-semibold text-white truncate">
             {currentUser.name || currentUser.username}
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-grow">
-        <ul className="flex flex-col p-4 space-y-2">
-          <li>
-            <Link
-              to="/account"
-              className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                location.pathname === "/account" ? "bg-blue-500" : ""
-              }`}
-            >
-              <FaUser className="mr-2" />
-              <span>Tài khoản</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/devices"
-              className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                location.pathname === "/devices" ? "bg-blue-500" : ""
-              }`}
-            >
-              <FaTools className="mr-2" />
-              <span>Thiết bị</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/reports"
-              className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                location.pathname === "/reports" ? "bg-blue-500" : ""
-              }`}
-            >
-              <FaChartBar className="mr-2" />
-              <span>Báo cáo</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/configdevice"
-              className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                location.pathname === "/configdevice" ? "bg-blue-500" : ""
-              }`}
-            >
-              <GrConfigure className="mr-2" />
-              <span>Điều chỉnh</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/schedule"
-              className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                location.pathname === "/schedule" ? "bg-blue-500" : ""
-              }`}
-            >
-              <FaCalendarAlt className="mr-2" />
-              <span>Lập Lịch</span>
-            </Link>
-          </li>
-
-          {/* Admin link - chỉ hiển thị cho admin */}
-          {isAdmin && isAdmin() && (
-            <li>
+      <nav className="flex-grow overflow-y-auto py-4">
+        <ul className="space-y-1 px-2">
+          {navItems.map(({ to, icon, label }) => (
+            <li key={to}>
               <Link
-                to="/admin"
-                className={`flex items-center w-full hover:bg-blue-400 px-3 py-2 rounded transition-colors ${
-                  location.pathname === "/admin" ? "bg-blue-500" : ""
+                to={to}
+                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-150 ${
+                  location.pathname === to
+                    ? "bg-blue-600 text-white"
+                    : "hover:bg-blue-500/70 hover:text-white text-zinc-300"
                 }`}
               >
-                <FaUsersCog className="mr-2" />
-                <span>User Management</span>
+                <span className="text-lg">{icon}</span>
+                <span className="text-sm font-medium">{label}</span>
               </Link>
             </li>
-          )}
+          ))}
         </ul>
       </nav>
-
-      {/* Logout button */}
     </div>
   );
 };

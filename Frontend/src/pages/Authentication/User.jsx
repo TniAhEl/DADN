@@ -500,7 +500,7 @@ const User = () => {
                 <div className="text-center py-4">
                   <button
                     className="py-2 px-6 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
-                    onClick={() => navigate("/admin/users")}
+                    onClick={() => navigate("/admin")}
                   >
                     Quản lý danh sách người dùng
                   </button>

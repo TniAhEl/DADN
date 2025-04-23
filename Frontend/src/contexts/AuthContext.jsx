@@ -1,11 +1,11 @@
 // contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Thêm import axios
 
 // Tạo context cho authentication và authorization
 export const AuthContext = createContext();
 
-// Danh sách các quyền trong hệ thống
 export const PERMISSIONS = {
   VIEW_DASHBOARD: "view_dashboard",
   VIEW_REPORTS: "view_reports",
@@ -48,10 +48,18 @@ export const ROLES = {
   ],
 };
 
+const api = axios.create({
+  baseURL: "http://localhost:3000/api/v1",
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState([]);
-  const [userType, setUserType] = useState("customer"); // admin hoặc customer/user
+  const [userType, setUserType] = useState("customer");
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState("");
 
@@ -63,25 +71,24 @@ export const AuthProvider = ({ children }) => {
         const username = getCookie("user_name");
 
         if (username) {
-          // Lưu user type
+          try {
+            const response = await api.get(`/auth/user/${username}`);
+            const userData = response.data;
 
-          // Fetch user info from API
-          const response = await fetch(
-            `http://localhost:3000/api/v1/auth/user/${username}`
-          );
-          if (response.ok) {
-            const userData = await response.json();
             setCurrentUser(userData);
             const role = userData.role;
-            setUserType(role); // Lưu user type từ API
+            setUserType(role);
 
             if (role === "admin") {
               setUserPermissions(ROLES.ADMIN);
             } else {
               setUserPermissions(ROLES.CUSTOMER);
             }
-          } else if (response.status === 401) {
-            clearAuthCookies();
+          } catch (error) {
+            if (error.response && error.response.status === 401) {
+              clearAuthCookies();
+            }
+            console.error("Error fetching user data:", error);
           }
         }
       } catch (error) {
@@ -98,98 +105,68 @@ export const AuthProvider = ({ children }) => {
   // Hàm login
   const login = async (username, password, userType = "customer") => {
     try {
-      // URL API khác nhau cho admin và user/customer
       const loginUrl =
+        userType === "admin" ? "/auth/admin/login" : "/auth/login";
+
+      const response = await api.post(loginUrl, { username, password });
+      const result = response.data;
+
+      document.cookie = `user_name=${username}; path=/`;
+      document.cookie = `user_type=${userType}; path=/`;
+
+      setUserType(userType);
+
+      const userApiUrl =
         userType === "admin"
-          ? "http://localhost:3000/api/v1/auth/admin/login"
-          : "http://localhost:3000/api/v1/auth/login";
+          ? `/auth/admin/${username}`
+          : `/auth/user/${username}`;
 
-      const response = await fetch(loginUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      // Chuyển sang axios
+      const userResponse = await api.get(userApiUrl);
+      const userData = userResponse.data;
 
-      const result = await response.json();
+      setCurrentUser(userData);
+      setUserPermissions(userType === "admin" ? ROLES.ADMIN : ROLES.CUSTOMER);
+      setAuthError("");
 
-      if (response.ok) {
-        // Lưu thông tin đăng nhập
-        document.cookie = `user_name=${username}; path=/`;
-        document.cookie = `user_type=${userType}; path=/`;
-
-        setUserType(userType);
-
-        // Xác định API endpoint lấy thông tin user
-        const userApiUrl =
-          userType === "admin"
-            ? `http://localhost:3000/api/v1/auth/admin/${username}`
-            : `http://localhost:3000/api/v1/auth/user/${username}`;
-
-        // Get user data including role
-        const userResponse = await fetch(userApiUrl);
-        const userData = await userResponse.json();
-
-        setCurrentUser(userData);
-
-        setUserPermissions(userType === "admin" ? ROLES.ADMIN : ROLES.CUSTOMER);
-
-        setAuthError("");
-
-        // Chuyển hướng tùy thuộc vào loại người dùng
-        if (userType === "admin") {
-          navigate("/admin"); // Đăng nhập admin -> trang admin
-        } else {
-          navigate("/"); // Đăng nhập user/customer -> trang chủ
-        }
-
-        return { success: true, message: "Đăng nhập thành công!" };
+      if (userType === "admin") {
+        navigate("/admin");
       } else {
-        setAuthError(result.message || "Đăng nhập thất bại");
-        throw new Error(result.message || "Đăng nhập thất bại");
+        navigate("/");
       }
+
+      return { success: true, message: "Đăng nhập thành công!" };
     } catch (error) {
-      setAuthError(error.message);
-      return { success: false, message: error.message };
+      const errorMessage =
+        error.response?.data?.message || "Đăng nhập thất bại";
+      setAuthError(errorMessage);
+      return { success: false, message: errorMessage };
     }
   };
 
-  // Hàm đăng ký
   const register = async (userData) => {
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: userData.username,
-            password: userData.password,
-            email: userData.email,
-            name: userData.name,
-            phone: userData.phone,
-            address: userData.address,
-            birth: userData.birth,
-            role: userData.role || "customer",
-          }),
-        }
-      );
+      const response = await api.post("/auth/register", {
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+        name: userData.name,
+        phone: userData.phone,
+        address: userData.address,
+        birth: userData.birth,
+        role: userData.role || "customer",
+      });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        setAuthError("");
-        return { success: true, message: "Đăng ký thành công!" };
-      } else {
-        setAuthError(result.message || "Đăng ký thất bại");
-        throw new Error(result.message || "Đăng ký thất bại");
-      }
+      const result = response.data;
+      setAuthError("");
+      return { success: true, message: "Đăng ký thành công!" };
     } catch (error) {
-      setAuthError(error.message);
-      return { success: false, message: error.message };
+      const errorMessage = error.response?.data?.message || "Đăng ký thất bại";
+      setAuthError(errorMessage);
+      return { success: false, message: errorMessage };
     }
   };
 
-  // Hàm logout
   const logout = () => {
     clearAuthCookies();
     setCurrentUser(null);
@@ -198,7 +175,6 @@ export const AuthProvider = ({ children }) => {
     navigate("/login-as");
   };
 
-  // Helper function để xóa cookies
   const clearAuthCookies = () => {
     document.cookie =
       "user_name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -206,7 +182,6 @@ export const AuthProvider = ({ children }) => {
       "user_type=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   };
 
-  // Hàm kiểm tra quyền
   const hasPermission = (permission) => {
     return userPermissions && userPermissions.includes(permission);
   };
@@ -250,7 +225,7 @@ export const useAuth = () => {
 export const PermissionGate = ({ children, permission }) => {
   const { hasPermission, loading } = useAuth();
   if (loading) {
-    return null; // hoặc có thể thêm một loader nếu cần
+    return null;
   }
   if (!permission || (hasPermission && hasPermission(permission))) {
     return children;

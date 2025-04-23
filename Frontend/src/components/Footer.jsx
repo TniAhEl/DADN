@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "../assets/hcmut.png";
+import logo from "../assets/picture/water.png";
 import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
 
 const Footer = () => {

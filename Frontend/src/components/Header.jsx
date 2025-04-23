@@ -1,6 +1,6 @@
 import React from "react";
 import { FaSignOutAlt } from "react-icons/fa"; // Import biểu tượng đăng xuất từ react-icons
-import logo from "../assets/hcmut.png"; // Import logo
+import logo from "../assets/picture/water.png"; // Import logo
 import { useAuth } from "../contexts/AuthContext";
 const Header = () => {
   const { logout } = useAuth();
@@ -10,7 +10,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-gray-700 text-white py-4">
+    <header className="bg-gray-800 text-white py-4">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo và tên */}
         <div className="flex items-center justify-center flex-grow cursor-pointer">

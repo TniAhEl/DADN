@@ -1,319 +1,229 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
+import { ScheduleProvider, useSchedule } from "../../contexts/ScheduleContext";
+import { FcAbout } from "react-icons/fc";
+import { FcFullTrash } from "react-icons/fc";
+const ScheduleContent = () => {
+  const {
+    events,
+    history,
+    loading,
+    addSchedule,
+    deleteSchedule,
+    updateSchedule,
+  } = useSchedule();
+  // console.log("events", events);
+  // console.log("history", history);
 
-const Schedule = () => {
-  const [events, setEvents] = useState([]);
-  const [showSchedule, setShowSchedule] = useState(false);
-  const deviceData = {
-    currentDate: "2025-04-12",
-    currentTime: "02:00",
-    moisture: 45,
-    temperature: 29,
-  };
-  const checkCondition = (operator, deviceValue, ruleValue) => {
-    switch (operator) {
-      case "less":
-        return deviceValue < ruleValue;
-      case "less equals":
-        return deviceValue <= ruleValue;
-      case "equals":
-        return deviceValue === ruleValue;
-      case "greater equals":
-        return deviceValue >= ruleValue;
-      case "greater":
-        return deviceValue > ruleValue;
-      default:
-        return false;
-    }
-  };
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ title: "", datetime: "" });
 
-  const [history, setHistory] = useState([]);
-
-  const [useSpecificDate, setUseSpecificDate] = useState(true);
-
-  const handleAddEvent = (e) => {
+  const handleAddEvent = async (e) => {
     e.preventDefault();
-
     const form = e.target;
 
+    const datetime = new Date(form.datetime.value);
     const newEvent = {
-      date: useSpecificDate ? form.date.value : "",
-      frequency: useSpecificDate ? "" : form.frequency.value,
       title: form.title.value,
-      time: form.time.value,
-      soilCondition: {
-        operator: form.soilOperator.value,
-        value: parseInt(form.soilValue.value),
-      },
-      tempCondition: {
-        operator: form.tempOperator.value,
-        value: parseInt(form.tempValue.value),
-      },
+      date: datetime.toISOString(),
     };
 
-    // Cập nhật vào danh sách sự kiện
-    setEvents((prevEvents) => [...prevEvents, newEvent]);
+    const result = isEditing
+      ? await updateSchedule(editingId, newEvent) // Cập nhật sự kiện
+      : await addSchedule(newEvent); // Thêm sự kiện mới
 
-    // Tự động kiểm tra tưới ngay lập tức
-    const matchTime = newEvent.time === deviceData.currentTime;
-    const matchDate = newEvent.date
-      ? newEvent.date === deviceData.currentDate
-      : true;
-
-    const soilOK = checkCondition(
-      newEvent.soilCondition.operator,
-      deviceData.moisture,
-      newEvent.soilCondition.value
-    );
-
-    const tempOK = checkCondition(
-      newEvent.tempCondition.operator,
-      deviceData.temperature,
-      newEvent.tempCondition.value
-    );
-
-    if (matchTime && matchDate && soilOK && tempOK) {
-      const newHistory = {
-        date: deviceData.currentDate,
-        time: deviceData.currentTime,
-        moisture: deviceData.moisture,
-        temperature: deviceData.temperature,
-      };
-
-      // Kiểm tra trùng lịch sử
-      const alreadyExists = history.some(
-        (h) => h.date === newHistory.date && h.time === newHistory.time
+    if (result.success) {
+      alert(
+        isEditing ? "✏️ Sự kiện đã được cập nhật!" : "📝 Sự kiện đã được thêm!"
       );
-
-      if (!alreadyExists) {
-        setHistory((prev) => [...prev, newHistory]);
-        alert("✅ Điều kiện phù hợp — đã tự động tưới!");
-      } else {
-        alert("⏳ Đã có bản ghi lịch sử cho thời điểm này.");
-      }
+      form.reset();
+      setFormData({ title: "", datetime: "" });
+      setIsEditing(false);
+      setEditingId(null);
     } else {
-      alert("⚠️ Lịch tưới vừa thêm không phù hợp điều kiện hiện tại.");
+      alert(`❌ Error: ${result.message}`);
     }
-
-    form.reset();
+  };
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Hàm xóa sự kiện
+  const handleDeleteEvent = async (id) => {
+    if (window.confirm("Bạn có chắc chắn muốn xoá sự kiện này không?")) {
+      const result = await deleteSchedule(id);
+      if (result.success) {
+        alert("🗑️ Đã xoá sự kiện!");
+      } else {
+        alert(`❌ Lỗi khi xoá: ${result.message}`);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+        <span className="ml-4 text-xl font-medium text-gray-600">
+          Loading schedules...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar className="w-1/6 min-h-screen bg-gray-800 text-white" />
       <div className="flex flex-col w-5/6">
-        <Header className="w-full bg-blue-500 text-white p-4" />
-        <main className="flex-grow container mx-auto py-8">
-          <h1 className="text-3xl font-bold text-center">Lịch tưới</h1>
-          <p className="mt-4 text-center">
-            Quản lý các sự kiện của bạn trong lịch bên dưới.
-          </p>
-
-          {/* Form thêm sự kiện */}
-          <div className="mt-8 max-w-2xl mx-auto p-4 border rounded-lg bg-white shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Thêm lịch tưới mới</h2>
-
-            <form onSubmit={handleAddEvent}>
-              <div className="mb-4 flex gap-4 items-center">
-                <label className="font-semibold">Kiểu lặp:</label>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    name="scheduleType"
-                    checked={useSpecificDate}
-                    onChange={() => setUseSpecificDate(true)} // Chọn "Ngày cụ thể"
-                  />
-                  Ngày cụ thể
-                </label>
-                <label className="flex items-center gap-1">
-                  <input
-                    type="radio"
-                    name="scheduleType"
-                    checked={!useSpecificDate}
-                    onChange={() => setUseSpecificDate(false)} // Chọn "Tần suất"
-                  />
-                  Tần suất
-                </label>
-              </div>
-
-              {/* Hiển thị input ngày khi chọn "Ngày cụ thể" */}
-              {useSpecificDate && (
-                <input
-                  type="date"
-                  name="date"
-                  className="w-full p-2 mb-4 border rounded"
-                  required={useSpecificDate}
-                />
-              )}
-
-              {/* Hiển thị select tần suất khi chọn "Tần suất" */}
-              {!useSpecificDate && (
-                <select
-                  name="frequency"
-                  className="w-full p-2 mb-4 border rounded"
-                  required={!useSpecificDate}
-                >
-                  <option value="">--Chọn tần suất--</option>
-                  <option value="Daily">Hàng ngày</option>
-                  <option value="Weekly">Hàng tuần</option>
-                  <option value="Monthly">Hàng tháng</option>
-                </select>
-              )}
-              <input
-                type="text"
-                name="title"
-                className="w-full p-2 mb-4 border rounded"
-                placeholder="Tên sự kiện"
-                required
-              />
-
-              <input
-                type="time"
-                name="time"
-                className="w-full p-2 mb-4 border rounded"
-                required
-              />
-
-              {/* Điều kiện độ ẩm đất */}
-              <label className="block font-semibold mb-2">
-                Điều kiện độ ẩm đất
-              </label>
-              <div className="flex gap-2 mb-4">
-                <select
-                  name="soilOperator"
-                  className="p-2 border rounded w-1/2"
-                  required
-                >
-                  <option value="less">{`<`}</option>
-                  <option value="less equals">{`≤`}</option>
-                  <option value="equals">{`=`}</option>
-                  <option value="greater equals">{`≥`}</option>
-                  <option value="greater">{`>`}</option>
-                </select>
-                <input
-                  type="number"
-                  name="soilValue"
-                  className="p-2 border rounded w-1/2"
-                  placeholder="%"
-                  min="0"
-                  max="100"
-                  required
-                />
-              </div>
-
-              {/* Điều kiện nhiệt độ */}
-              <label className="block font-semibold mb-2">
-                Điều kiện nhiệt độ
-              </label>
-              <div className="flex gap-2 mb-4">
-                <select
-                  name="tempOperator"
-                  className="p-2 border rounded w-1/2"
-                  required
-                >
-                  <option value="less">{`<`}</option>
-                  <option value="less equals">{`≤`}</option>
-                  <option value="equals">{`=`}</option>
-                  <option value="greater equals">{`≥`}</option>
-                  <option value="greater">{`>`}</option>
-                </select>
-                <input
-                  type="number"
-                  name="tempValue"
-                  className="p-2 border rounded w-1/2"
-                  placeholder="°C"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-              >
-                Thêm sự kiện
-              </button>
-            </form>
+        <Header />
+        <main className="flex-grow px-8 py-6">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Lịch tưới cây
+            </h1>
+            <p className="text-gray-500">
+              Quản lý các sự kiện và lịch sử tưới cây của bạn
+            </p>
           </div>
-          <div className="text-center">
-            <button
-              onClick={() => setShowSchedule(!showSchedule)}
-              className="mt-6 mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              {showSchedule ? "Ẩn lịch tưới" : "Xem lịch tưới"}
-            </button>
-          </div>
-          {/* Danh sách sự kiện */}
-          {showSchedule && (
-            <div className="mt-8 mx-8 p-4 border rounded-lg bg-white shadow-md">
-              <h2 className="text-2xl font-semibold mb-4">
-                Các lịch tưới của bạn
+
+          {/* Form */}
+          <div className="grid md:grid-cols-2 gap-8 mt-10">
+            <div className="bg-white shadow-md rounded-2xl p-6">
+              <h2 className="text-xl font-semibold mb-4">
+                ➕ Thêm sự kiện mới
               </h2>
-              <table className="min-w-full table-auto border-collapse">
-                <thead>
-                  <tr className="bg-gray-200">
-                    <th className="px-4 py-2 border">Ngày</th>
-                    <th className="px-4 py-2 border">Tần suất</th>
-                    <th className="px-4 py-2 border">Tên sự kiện</th>
-                    <th className="px-4 py-2 border">Thời gian</th>
-                    <th className="px-4 py-2 border">Độ ẩm</th>
-                    <th className="px-4 py-2 border">Nhiệt độ</th>
+              <form onSubmit={handleAddEvent} className="space-y-4">
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="Tên sự kiện"
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  name="datetime"
+                  value={formData.datetime}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-medium py-2 rounded-lg"
+                >
+                  {isEditing ? "Cập nhật sự kiện" : "Thêm sự kiện"}
+                </button>
+              </form>
+            </div>
+
+            {/* Lịch tưới - hiển thị ngay bên cạnh */}
+            <div className="bg-white shadow-md rounded-2xl p-6 overflow-x-auto">
+              <h2 className="text-2xl font-bold mb-4">📅 Danh sách sự kiện</h2>
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-blue-100">
+                  <tr>
+                    <th className="p-3 border-b">Tên sự kiện</th>
+                    <th className="p-3 border-b">Ngày tưới</th>
+                    <th className="p-3 border-b">Thời gian</th>
+                    <th className="p-3 border-b">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {events.map((event, index) => (
-                    <tr key={index} className="hover:bg-gray-100">
-                      <td className="px-4 py-2 border">{event.date || "—"}</td>
-                      <td className="px-4 py-2 border">
-                        {event.frequency || "—"}
+                    <tr
+                      key={index}
+                      className="odd:bg-white even:bg-gray-50 transition hover:bg-blue-50"
+                    >
+                      <td className="p-3">{event.name}</td>
+                      <td className="p-3">
+                        {new Date(event.date).toLocaleDateString("vi-VN", {
+                          timeZone: "Asia/Ho_Chi_Minh",
+                        })}
                       </td>
-                      <td className="px-4 py-2 border">{event.title}</td>
-                      <td className="px-4 py-2 border">{event.time}</td>
-                      <td className="px-4 py-2 border">
-                        {event.soilCondition.operator}{" "}
-                        {event.soilCondition.value}%
+                      <td className="p-3">
+                        {new Date(event.date).toLocaleTimeString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "Asia/Ho_Chi_Minh",
+                        })}
                       </td>
-                      <td className="px-4 py-2 border">
-                        {event.tempCondition.operator}{" "}
-                        {event.tempCondition.value}°C
+                      <td className="p-3">
+                        {/* Chỉnh sửa sự kiện */}
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setEditingId(event._id);
+                            setFormData({
+                              title: event.title,
+                              datetime: new Date(event.date)
+                                .toISOString()
+                                .slice(0, 16),
+                            });
+                          }}
+                          className="mx-2.5 hover:cursor-pointer"
+                        >
+                          <FcAbout className="w-4 h-4" />
+                        </button>
+                        {/* Xóa sự kiện */}
+                        <button
+                          onClick={() => handleDeleteEvent(event._id)}
+                          className="mx-2.5 hover:cursor-pointer"
+                        >
+                          <FcFullTrash className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
 
-          {/* History table */}
-          <div className="mt-8 mx-8 p-4 border rounded-lg bg-white shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">Lịch sử tưới</h2>
-            <table className="min-w-full table-auto border-collapse">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="px-4 py-2 border">Ngày</th>
-                  <th className="px-4 py-2 border">Thời gian</th>
-                  <th className="px-4 py-2 border">Độ ẩm ghi nhận</th>
-                  <th className="px-4 py-2 border">Nhiệt độ ghi nhận</th>
+          {/* History */}
+          <div className="mt-10 bg-white shadow-md rounded-2xl p-6 overflow-x-auto">
+            <h2 className="text-2xl font-bold mb-4">📊 Lịch sử tưới</h2>
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-yellow-100">
+                <tr>
+                  <th className="p-3 border-b">Ngày</th>
+                  <th className="p-3 border-b">Thời gian</th>
+                  <th className="p-3 border-b">Độ ẩm</th>
+                  <th className="p-3 border-b">Nhiệt độ</th>
                 </tr>
               </thead>
               <tbody>
+                {/* {console.log("history", history)} */}
                 {history.map((h, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2 border">{h.date}</td>
-                    <td className="px-4 py-2 border">{h.time}</td>
-                    <td className="px-4 py-2 border">{h.moisture}%</td>
-                    <td className="px-4 py-2 border">{h.temperature}°C</td>
+                  <tr
+                    key={index}
+                    className="odd:bg-white even:bg-gray-50 transition hover:bg-yellow-50"
+                  >
+                    <td className="p-3">{h.date}</td>
+                    <td className="p-3">{h.time}</td>
+                    <td className="p-3">{h.moisture}%</td>
+                    <td className="p-3">{h.temperature}°C</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </main>
-        <Footer className="w-full bg-gray-200 text-center p-4" />
+        <Footer />
       </div>
     </div>
   );
 };
+
+const Schedule = () => (
+  <ScheduleProvider>
+    <ScheduleContent />
+  </ScheduleProvider>
+);
 
 export default Schedule;
