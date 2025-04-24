@@ -88,3 +88,16 @@ module.exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch users", error });
   }
 };
+
+module.exports.deleteUser = async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const deletedUser = await User.findOneAndDelete({ username });
+    if (!deletedUser) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "Xóa user thành công", user: deletedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Delete failed", error: error.message });
+  }
+};
