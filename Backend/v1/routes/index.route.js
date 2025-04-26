@@ -9,6 +9,10 @@ const wateringScheduleRoutes = require("./wateringSchedule.route.js");
 
 const soilMoisureRoutes = require("./soil-moisure.route.js");
 
+const turnOnLightRoutes = require("./turn-on-light.route.js");
+const turnOnPumpRoutes = require("./turn-on-pump.route.js");
+
+
 module.exports = (app) => {
   const version = "/api/v1";
 
@@ -26,4 +30,8 @@ module.exports = (app) => {
   app.use(`${version}/auth`, authRoutes);
   app.use(`${version}/upload`, uploadRoutes);
   app.use(`${version}/watering-schedule`, wateringScheduleRoutes);
+  app.use(`${version}/turnOnLight`, turnOnLightRoutes);
+  app.use(`${version}/turnOnPump`, turnOnPumpRoutes);
+
+
 };
