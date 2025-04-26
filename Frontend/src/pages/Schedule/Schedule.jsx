@@ -75,7 +75,7 @@ const ScheduleContent = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-emerald-50">
       <Sidebar className="w-1/6 min-h-screen bg-gray-800 text-white" />
       <div className="flex flex-col w-5/6">
         <Header />

@@ -25,6 +25,7 @@ const User = () => {
   useEffect(() => {
     if (!currentUser && !isLoading) {
       navigate("/login");
+      console.log(currentUser);
     }
   }, [currentUser, navigate, isLoading]);
 
@@ -34,8 +35,6 @@ const User = () => {
       setUserInfo(currentUser);
     }
   }, [currentUser]);
-  const username = currentUser.username;
-  console.log("User identifier:", currentUser.name, username);
 
   const showNotification = (message, type = "success") => {
     setNotification({
@@ -53,8 +52,8 @@ const User = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const username = currentUser.username; // Chắc chắn rằng 'username' tồn tại
-    console.log("Using username:", username); // Kiểm tra username
+    const username = currentUser.username;
+    console.log("Using username:", username);
     if (!username) {
       showNotification("Không tìm thấy username", "error");
       setIsLoading(false);
@@ -66,7 +65,6 @@ const User = () => {
       phone: e.target.phone.value,
       role: userInfo.role,
       address: e.target.address.value,
-      department: e.target.department.value,
     };
 
     try {
@@ -164,7 +162,7 @@ const User = () => {
     phone: userInfo?.phone || "Chưa cập nhật",
     role: userInfo?.role || "User",
     address: userInfo?.address || "Chưa cập nhật",
-    department: userInfo?.department || "Chưa cập nhật",
+    username: userInfo?.username || "Chưa cập nhật",
     accountStatus: userInfo?.accountStatus || "Active",
     joinDate: userInfo?.joinDate || new Date().toISOString().split("T")[0],
     lastLogin: userInfo?.lastLogin || new Date().toLocaleString(),
@@ -253,7 +251,7 @@ const User = () => {
                   {defaultUserInfo.name}
                 </h2>
                 <p className="text-gray-600">
-                  {defaultUserInfo.role} - {defaultUserInfo.department}
+                  {defaultUserInfo.role} - {defaultUserInfo.username}
                 </p>
                 <div className="mt-2 flex items-center">
                   <span
@@ -308,8 +306,8 @@ const User = () => {
                     <p className="font-medium">{defaultUserInfo.role}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-500">Phòng ban</p>
-                    <p className="font-medium">{defaultUserInfo.department}</p>
+                    <p className="text-sm text-gray-500">Username</p>
+                    <p className="font-medium">{defaultUserInfo.username}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500">Địa chỉ</p>
@@ -558,17 +556,6 @@ const User = () => {
                         name="address"
                         defaultValue={defaultUserInfo.address}
                         placeholder="Địa chỉ"
-                        className="border p-2 rounded w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phòng ban
-                      </label>
-                      <input
-                        name="department"
-                        defaultValue={defaultUserInfo.department}
-                        placeholder="Phòng ban"
                         className="border p-2 rounded w-full"
                       />
                     </div>
