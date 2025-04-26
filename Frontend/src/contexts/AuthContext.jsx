@@ -58,6 +58,7 @@ const api = axios.create({
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [users, setUsers] = useState([]);
   const [userPermissions, setUserPermissions] = useState([]);
   const [userType, setUserType] = useState("customer");
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,10 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
     const checkLoggedInUser = async () => {
       try {
         const username = getCookie("user_name");
@@ -101,7 +106,59 @@ export const AuthProvider = ({ children }) => {
 
     checkLoggedInUser();
   }, []);
+  const fetchUsers = async () => {
+    try {
+      // Ensure there's a valid token in headers
+      const token = localStorage.getItem("auth_token");
+      if (token) {
+        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
+        const response = await api.get("/auth/user");
+        setUsers(response.data);
+        return { success: true, data: response.data };
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+  const deleteUser = async (username) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        return { success: false, message: "Không có token xác thực" };
+      }
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      console.log(`Đang gọi API xóa user: /auth/user/${username}`);
+      const response = await api.delete(`/auth/user/${username}`);
+
+      if (response.data) {
+        console.log("Kết quả xóa user:", response.data);
+        setUsers((prevUsers) =>
+          prevUsers.filter((user) => user.username !== username)
+        );
+        return { success: true, message: "Xóa người dùng thành công" };
+      }
+
+      return { success: false, message: "Không thể xóa người dùng" };
+    } catch (error) {
+      // console.error("Chi tiết lỗi xóa user:", error);
+      // console.log("Status code:", error.response?.status);
+      // console.log("Response data:", error.response?.data);
+
+      // Thông báo lỗi cụ thể hơn
+
+      return {
+        success: false,
+        message: error.response?.data?.message || "Xóa người dùng thất bại",
+      };
+    }
+  };
+  useEffect(() => {
+    if (currentUser && isAdmin()) {
+      fetchUsers();
+    }
+  }, [currentUser]);
   // Hàm login
   const login = async (username, password, userType = "customer") => {
     try {
@@ -110,6 +167,10 @@ export const AuthProvider = ({ children }) => {
 
       const response = await api.post(loginUrl, { username, password });
       const result = response.data;
+      if (result.token) {
+        api.defaults.headers.common["Authorization"] = `Bearer ${result.token}`;
+        localStorage.setItem("auth_token", result.token); // optional
+      }
 
       document.cookie = `user_name=${username}; path=/`;
       document.cookie = `user_type=${userType}; path=/`;
@@ -137,6 +198,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, message: "Đăng nhập thành công!" };
     } catch (error) {
+      console.error("Login failed:", error);
       const errorMessage =
         error.response?.data?.message || "Đăng nhập thất bại";
       setAuthError(errorMessage);
@@ -161,13 +223,15 @@ export const AuthProvider = ({ children }) => {
       setAuthError("");
       return { success: true, message: "Đăng ký thành công!" };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Đăng ký thất bại";
-      setAuthError(errorMessage);
-      return { success: false, message: errorMessage };
+      const errorMessager = error.response?.data?.message || "Đăng ký thất bại";
+      setAuthError(errorMessager);
+      return { success: false, message: errorMessager };
     }
   };
 
   const logout = () => {
+    localStorage.removeItem("auth_token");
+    delete api.defaults.headers.common["Authorization"];
     clearAuthCookies();
     setCurrentUser(null);
     setUserPermissions([]);
@@ -212,6 +276,9 @@ export const AuthProvider = ({ children }) => {
     loading,
     authError,
     setAuthError,
+    users,
+    fetchUsers,
+    deleteUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

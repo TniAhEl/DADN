@@ -1,5 +1,7 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET; // Lấy JWT_SECRET từ biến môi trường
 
 module.exports.register = async (req, res) => {
   const {
@@ -39,15 +41,21 @@ module.exports.login = async (req, res) => {
   const { username, password } = req.body;
   try {
     const user = await User.findOne({ username });
+    console.log("Login attempt for:", username);
     if (!user)
       return res.status(401).json({ message: "Invalid username or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid username or password" });
-
-    res.status(200).json({ message: "Login successful", user });
+    const token = jwt.sign(
+      { id: user._id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1d" } // Token sống 1 ngày
+    );
+    res.status(200).json({ message: "Login successful", user, token });
   } catch (error) {
+    console.log("Login error:", error); // Log ra console để dễ debug
     res.status(500).json({ message: "Login failed", error });
   }
 };
@@ -94,7 +102,8 @@ module.exports.deleteUser = async (req, res) => {
 
   try {
     const deletedUser = await User.findOneAndDelete({ username });
-    if (!deletedUser) return res.status(404).json({ message: "User not found" });
+    if (!deletedUser)
+      return res.status(404).json({ message: "Không tìm thấy user để xóa" });
 
     res.json({ message: "Xóa user thành công", user: deletedUser });
   } catch (error) {
