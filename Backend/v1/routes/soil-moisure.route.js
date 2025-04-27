@@ -7,7 +7,7 @@ const controller = require("../controllers/soil-moisure.controller.js");
 
 router.get("/", controller.index) 
 
-router.get("/latest", controller.getLatest) 
+router.get("/latest", controller.index) 
 
 
 module.exports = router;

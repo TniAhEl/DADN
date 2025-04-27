@@ -11,6 +11,10 @@ const soilMoisureRoutes = require("./soil-moisure.route.js");
 
 const turnOnLightRoutes = require("./turn-on-light.route.js");
 const turnOnPumpRoutes = require("./turn-on-pump.route.js");
+const getPumpStatusRoutes = require("./get-pump-status.route.js");
+const getLightStatusRoutes = require("./get-light-status.route.js");
+const MoistureThreshold = require("./moisture-threshold.route.js");
+const LightThreshold = require("./light-threshold.route.js");
 
 
 module.exports = (app) => {
@@ -32,6 +36,11 @@ module.exports = (app) => {
   app.use(`${version}/watering-schedule`, wateringScheduleRoutes);
   app.use(`${version}/turnOnLight`, turnOnLightRoutes);
   app.use(`${version}/turnOnPump`, turnOnPumpRoutes);
+  app.use(`${version}/getPump`, getPumpStatusRoutes);
+  app.use(`${version}/getLight`, getLightStatusRoutes);
+  app.use(`${version}/moisture-threshold`, MoistureThreshold);
+  app.use(`${version}/light-threshold`, LightThreshold);
+
 
 
 };
