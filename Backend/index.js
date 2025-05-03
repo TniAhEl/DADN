@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 const AIO_USERNAME = process.env.AIO_USERNAME;
 const AIO_KEY = process.env.AIO_KEY;
 
-cron.schedule("* * * * *", async (req, res) => {
+cron.schedule("0 12,16 * * *", async (req, res) => {
   const log = new WateringSchedule({
     date: new Date(),
     name: "Tưới cây tự động",
