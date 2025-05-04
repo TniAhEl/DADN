@@ -15,18 +15,51 @@ import Modal from "../../components/Modal";
 
 const ConfigDevice = () => {
   const [pumpRunning, setPumpRunning] = useState(false);
-  const [pumpSpeed, setPumpSpeed] = useState(50);
+  const [pumpSpeed, setPumpSpeed] = useState(null);
   const [pumpMode, setPumpMode] = useState("manual");
   const [lightOn, setLightOn] = useState(false);
-  const [lightIntensity, setLightIntensity] = useState(70);
+  const [lightIntensity, setLightIntensity] = useState(null);
   const [lightMode, setLightMode] = useState("manual");
   const [showMoistureModal, setShowMoistureModal] = useState(false);
   const [showLightModal, setShowLightModal] = useState(false);
   const [moistureMin, setMoistureMin] = useState(30);
   const [moistureMax, setMoistureMax] = useState(70);
+  const [lightDebounceTimer, setLightDebounceTimer] = useState(null);
+
+const handleLightIntensityChange = (newIntensity) => {
+  setLightIntensity(newIntensity);
+
+  if (lightDebounceTimer) {
+    clearTimeout(lightDebounceTimer);
+  }
+
+  const timer = setTimeout(() => {
+    if (lightMode === "manual" && lightOn) {
+      sendLightIntensityToServer(newIntensity);
+    }
+  }, 2000); // đợi 2 giây sau khi dừng mới gửi
+  setLightDebounceTimer(timer);
+};
 
   const [lightMin, setLightMin] = useState(10);
   const [lightMax, setLightMax] = useState(80);
+
+  const [pumpDebounceTimer, setPumpDebounceTimer] = useState(null);
+
+const handlePumpSpeedChange = (newSpeed) => {
+  setPumpSpeed(newSpeed);
+
+  if (pumpDebounceTimer) {
+    clearTimeout(pumpDebounceTimer);
+  }
+
+  const timer = setTimeout(() => {
+    sendPumpSpeedToServer(newSpeed);
+  }, 2000); // đợi 2 giây
+
+  setPumpDebounceTimer(timer);
+};
+
 
   useEffect(() => {
     const fetchPumpStatus = async () => {
@@ -67,41 +100,49 @@ const ConfigDevice = () => {
     }, []);
 
     useEffect(() => {
+      if (pumpMode !== "auto") return;
+    
       checkMoistureAndControlPump();
       const interval = setInterval(() => {
         checkMoistureAndControlPump();
       }, 30000);
     
       return () => clearInterval(interval);
-    }, []);
+    }, [pumpMode]);
+    
     useEffect(() => {
+      if (lightMode !== "auto") return; // ❌ Nếu không phải auto thì không chạy
+    
       const checkLightAndControl = async () => {
         try {
           const response = await axios.get("http://localhost:3000/api/v1/light-sensor/latest");
           const latestLight = parseFloat(response.data.data.value);
+          const min = parseFloat(lightMin);
+          const max = parseFloat(lightMax);
     
-          console.log("Cường độ ánh sáng mới nhất:", latestLight);
+          console.log("Ánh sáng đo:", latestLight, "| Ngưỡng:", min, "-", max);
     
-          if (latestLight >= lightMin && latestLight <= lightMax) {
-            // Nếu nằm trong khoảng, gửi API bật đèn
+          if (latestLight >= min && latestLight <= max) {
             await axios.post("http://localhost:3000/api/v1/turnOnLight", { value: 1 });
             console.log("Ánh sáng phù hợp, đã bật đèn!");
           } else {
-            console.log("Ánh sáng không phù hợp, không bật đèn.");
+            await axios.post("http://localhost:3000/api/v1/turnOnLight", { value: 0 });
+            console.log("Ánh sáng không phù hợp, đã tắt đèn.");
           }
         } catch (error) {
           console.error("Error checking light:", error.message);
         }
       };
     
-      checkLightAndControl(); // Gọi khi vào lần đầu
+      checkLightAndControl(); // gọi lần đầu
     
       const interval = setInterval(() => {
-        checkLightAndControl(); // Gọi lại mỗi 30s
-      }, 30000);
+        checkLightAndControl();
+      }, 30000); // gọi lại mỗi 30 giây
     
       return () => clearInterval(interval);
-    }, [lightMin, lightMax]);
+    }, [lightMin, lightMax, lightMode]);
+    
     
     useEffect(() => {
       const fetchMoistureThreshold = async () => {
@@ -256,22 +297,25 @@ const ConfigDevice = () => {
   const checkMoistureAndControlPump = async () => {
     try {
       const response = await axios.get("http://localhost:3000/api/v1/dht-moisure/latest");
-      
-      const latestMoisture = parseFloat(response.data.data.value); // lấy giá trị độ ẩm
+      const latestMoisture = parseFloat(response.data.data.value);
   
-      console.log("Độ ẩm mới nhất:", latestMoisture);
+      const min = parseFloat(moistureMin);
+      const max = parseFloat(moistureMax);
   
-      if (latestMoisture >= moistureMin && latestMoisture <= moistureMax) {
-        // Nếu nằm trong khoảng thì bật thiết bị
+      console.log("Độ ẩm đo:", latestMoisture, "| Ngưỡng:", min, "-", max);
+  
+      if (latestMoisture >= min && latestMoisture <= max) {
         await axios.post("http://localhost:3000/api/v1/turnOnPump", { value: 1 });
-        console.log("Độ ẩm phù hợp, đã bật đèn!");
+        console.log("Trong ngưỡng → Bật bơm");
       } else {
-        console.log("Độ ẩm không phù hợp, không bật đèn.");
+        await axios.post("http://localhost:3000/api/v1/turnOnPump", { value: 0 });
+        console.log("Ngoài ngưỡng → Tắt bơm");
       }
     } catch (error) {
       console.error("Error checking moisture:", error.message);
     }
   };
+  
 
   return (
     <div className="flex min-h-screen">
@@ -389,11 +433,8 @@ const ConfigDevice = () => {
                     min="0"
                     max="100"
                     value={pumpSpeed}
-                    onChange={async (e) => {
-                      const newSpeed = parseInt(e.target.value);
-                      setPumpSpeed(newSpeed);
-                      await sendPumpSpeedToServer(newSpeed); // Gửi API mỗi lần kéo
-                    }}                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    onChange={(e) => handlePumpSpeedChange(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
                     disabled={!pumpRunning || pumpMode === "auto"}
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -509,14 +550,8 @@ const ConfigDevice = () => {
                     min="0"
                     max="100"
                     value={lightIntensity}
-                    onChange={async (e) => {
-                      const newIntensity = parseInt(e.target.value);
-                      setLightIntensity(newIntensity);
-                    
-                      if (lightMode === "manual" && lightOn) {
-                        await sendLightIntensityToServer(newIntensity);
-                      }
-                    }}
+                    onChange={(e) => handleLightIntensityChange(parseInt(e.target.value))}
+
                     
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                     disabled={!lightOn || lightMode === "auto"}
