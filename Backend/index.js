@@ -7,7 +7,7 @@ const database = require("./config/database");
 const bodyParser = require("body-parser");
 database.connect();
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT ;
 
 const WateringSchedule = require("./v1/models/wateringSchedule.model.js");
 
