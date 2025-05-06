@@ -306,7 +306,7 @@ const User = () => {
                     <p className="font-medium">{defaultUserInfo.role}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-500">Username</p>
+                    <p className="text-sm text-gray-500">Tên đăng nhập</p>
                     <p className="font-medium">{defaultUserInfo.username}</p>
                   </div>
                   <div className="space-y-1">

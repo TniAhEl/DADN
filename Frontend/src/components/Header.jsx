@@ -14,7 +14,9 @@ const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo và tên */}
         <div className="flex items-center justify-center flex-grow cursor-pointer">
+          <a href="/about">
           <img src={logo} alt="HCMUT Logo" className="h-10 mr-3" />
+          </a>
           <div className="text-lg font-bold">
             <a href="/" className="">
               Smart water

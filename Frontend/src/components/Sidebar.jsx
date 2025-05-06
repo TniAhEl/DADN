@@ -26,7 +26,7 @@ const Sidebar = () => {
     navItems.push({
       to: "/admin",
       icon: <FaUsersCog />,
-      label: "User Management",
+      label: "Quản lý người dùng",
     });
   }
 
