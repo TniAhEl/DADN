@@ -109,10 +109,10 @@ export const router = createBrowserRouter([
             path: "/devices",
             element: <Devices />,
           },
-          {
-            path: "/reports",
-            element: <Reports />,
-          },
+          // {
+          //   path: "/reports",
+          //   element: <Reports />,
+          // },
           {
             path: "/schedule",
             element: <Schedule />,

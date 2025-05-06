@@ -17,7 +17,7 @@ const Sidebar = () => {
   const navItems = [
     { to: "/account", icon: <FaUser />, label: "Tài khoản" },
     { to: "/devices", icon: <FaTools />, label: "Thiết bị" },
-    { to: "/reports", icon: <FaChartBar />, label: "Báo cáo" },
+    // { to: "/reports", icon: <FaChartBar />, label: "Báo cáo" },
     { to: "/configdevice", icon: <GrConfigure />, label: "Điều chỉnh" },
     { to: "/schedule", icon: <FaCalendarAlt />, label: "Lập Lịch" },
   ];
