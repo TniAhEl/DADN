@@ -67,6 +67,8 @@ const User = () => {
       address: e.target.address.value,
     };
 
+    const token = localStorage.getItem("auth_token");
+
     try {
       const response = await fetch(
         `http://localhost:3000/api/v1/auth/user/${encodeURIComponent(
@@ -76,6 +78,7 @@ const User = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(updatedInfo),
         }
@@ -110,7 +113,7 @@ const User = () => {
 
     const formData = new FormData();
     formData.append("image", file);
-
+    const token = localStorage.getItem("auth_token");
     try {
       const res = await fetch("http://localhost:3000/api/v1/upload/image", {
         method: "POST",
@@ -126,7 +129,10 @@ const User = () => {
           }`,
           {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ profileImage: newImageUrl }),
           }
         );

@@ -1,9 +1,7 @@
-// contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Thêm import axios
+import axios from "axios";
 
-// Tạo context cho authentication và authorization
 export const AuthContext = createContext();
 
 export const PERMISSIONS = {
@@ -220,6 +218,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       const result = response.data;
+
       setAuthError("");
       return { success: true, message: "Đăng ký thành công!" };
     } catch (error) {

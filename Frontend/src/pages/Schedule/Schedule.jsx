@@ -199,17 +199,21 @@ const ScheduleContent = () => {
               </thead>
               <tbody>
                 {/* {console.log("history", history)} */}
-                {history.map((h, index) => (
-                  <tr
-                    key={index}
-                    className="odd:bg-white even:bg-gray-50 transition hover:bg-yellow-50"
-                  >
-                    <td className="p-3">{h.date}</td>
-                    <td className="p-3">{h.time}</td>
-                    <td className="p-3">{h.moisture}%</td>
-                    <td className="p-3">{h.temperature}°C</td>
-                  </tr>
-                ))}
+                {history
+                  .slice()
+                  .reverse()
+                  .slice(0, 5)
+                  .map((h, index) => (
+                    <tr
+                      key={index}
+                      className="odd:bg-white even:bg-gray-50 transition hover:bg-yellow-50"
+                    >
+                      <td className="p-3">{h.date}</td>
+                      <td className="p-3">{h.time}</td>
+                      <td className="p-3">{h.moisture}%</td>
+                      <td className="p-3">{h.temperature}°C</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

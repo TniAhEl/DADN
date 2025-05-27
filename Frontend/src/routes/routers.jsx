@@ -13,7 +13,7 @@ import { PERMISSIONS } from "../contexts/AuthContext";
 import Unauthorized from "../pages/Authentication/Unauthorized";
 import NotFound from "../pages/Authentication/NotFound";
 import LandingPage from "../pages/LangdingPage/LandingPage";
-
+import { DeviceProvider } from "../contexts/DeviceContext";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 
 const ProtectedRoute = ({ requiredPermission }) => {
@@ -45,6 +45,11 @@ const AuthLayout = () => {
     </AuthProvider>
   );
 };
+const ConfigDeviceWithProvider = () => (
+  <DeviceProvider>
+    <ConfigDevice />
+  </DeviceProvider>
+);
 const AdminOnlyRoute = () => {
   const { currentUser, isAdmin, loading } = useAuth();
 
@@ -109,17 +114,14 @@ export const router = createBrowserRouter([
             path: "/devices",
             element: <Devices />,
           },
-          // {
-          //   path: "/reports",
-          //   element: <Reports />,
-          // },
+
           {
             path: "/schedule",
             element: <Schedule />,
           },
           {
             path: "/configdevice",
-            element: <ConfigDevice />,
+            element: <ConfigDeviceWithProvider />,
           },
         ],
       },
@@ -148,38 +150,3 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-
-// export const router = createBrowserRouter([
-//   {
-//     path: "/",
-//     element: <Home />,
-//   },
-//   {
-//     path: "/about",
-//     element: <About />,
-//   },
-//   {
-//     path: "/devices",
-//     element: <Devices />,
-//   },
-//   {
-//     path: "/reports",
-//     element: <Reports />,
-//   },
-//   {
-//     path: "/schedule",
-//     element: <Schedule />,
-//   },
-//   {
-//     path: "/account",
-//     element: <User />,
-//   },
-//   {
-//     path: "/admin",
-//     element: <Admin />,
-//   },
-//   {
-//     path: "/configdevice",
-//     element: <ConfigDevice />,
-//   },
-// ]);

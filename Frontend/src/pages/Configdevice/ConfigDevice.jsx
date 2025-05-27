@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Sidebar from "../../components/Sidebar";
-import axios from "axios";
+
+import { useDevice } from "../../contexts/DeviceContext";
 import {
   Clock,
   RefreshCw,
@@ -14,308 +15,39 @@ import {
 import Modal from "../../components/Modal";
 
 const ConfigDevice = () => {
-  const [pumpRunning, setPumpRunning] = useState(false);
-  const [pumpSpeed, setPumpSpeed] = useState(null);
-  const [pumpMode, setPumpMode] = useState("manual");
-  const [lightOn, setLightOn] = useState(false);
-  const [lightIntensity, setLightIntensity] = useState(null);
-  const [lightMode, setLightMode] = useState("manual");
-  const [showMoistureModal, setShowMoistureModal] = useState(false);
-  const [showLightModal, setShowLightModal] = useState(false);
-  const [moistureMin, setMoistureMin] = useState(30);
-  const [moistureMax, setMoistureMax] = useState(70);
-  const [lightDebounceTimer, setLightDebounceTimer] = useState(null);
+  const {
+    pumpRunning,
+    pumpSpeed,
+    pumpMode,
 
-const handleLightIntensityChange = (newIntensity) => {
-  setLightIntensity(newIntensity);
+    lightOn,
+    lightIntensity,
+    lightMode,
 
-  if (lightDebounceTimer) {
-    clearTimeout(lightDebounceTimer);
-  }
+    moistureMin,
+    moistureMax,
+    lightMin,
+    lightMax,
 
-  const timer = setTimeout(() => {
-    if (lightMode === "manual" && lightOn) {
-      sendLightIntensityToServer(newIntensity);
-    }
-  }, 2000); // đợi 2 giây sau khi dừng mới gửi
-  setLightDebounceTimer(timer);
-};
+    showMoistureModal,
+    showLightModal,
 
-  const [lightMin, setLightMin] = useState(10);
-  const [lightMax, setLightMax] = useState(80);
+    togglePump,
+    toggleLight,
+    togglePumpMode,
+    toggleLightMode,
+    handlePumpSpeedChange,
+    handleLightIntensityChange,
+    saveMoistureThreshold,
+    saveLightThreshold,
 
-  const [pumpDebounceTimer, setPumpDebounceTimer] = useState(null);
-
-const handlePumpSpeedChange = (newSpeed) => {
-  setPumpSpeed(newSpeed);
-
-  if (pumpDebounceTimer) {
-    clearTimeout(pumpDebounceTimer);
-  }
-
-  const timer = setTimeout(() => {
-    sendPumpSpeedToServer(newSpeed);
-  }, 2000); // đợi 2 giây
-
-  setPumpDebounceTimer(timer);
-};
-
-
-  useEffect(() => {
-    const fetchPumpStatus = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/v1/getPump");
-  
-        const value = parseFloat(response.data.data.value); // ép thành số
-  
-        if (value > 0) {
-          setPumpRunning(true);
-        } else {
-          setPumpRunning(false);
-        }
-  
-        setPumpSpeed(Math.round(value * 100)); // 0.3 --> 30%, 1 --> 100%
-      } catch (error) {
-        console.error("Error fetching pump status:", error.message);
-      }
-    };
-    const fetchLightStatus = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/api/v1/getLight");
-        const value = parseFloat(response.data.data.value);
-  
-        if (value > 0) {
-          setLightOn(true);
-        } else {
-          setLightOn(false);
-        }
-        setLightIntensity(Math.round(value * 100));
-      } catch (error) {
-        console.error("Error fetching light status:", error.message);
-      }
-    };
-  
-    fetchPumpStatus();
-    fetchLightStatus();
-    }, []);
-
-    useEffect(() => {
-      if (pumpMode !== "auto") return;
-    
-      checkMoistureAndControlPump();
-      const interval = setInterval(() => {
-        checkMoistureAndControlPump();
-      }, 30000);
-    
-      return () => clearInterval(interval);
-    }, [pumpMode]);
-    
-    useEffect(() => {
-      if (lightMode !== "auto") return; // ❌ Nếu không phải auto thì không chạy
-    
-      const checkLightAndControl = async () => {
-        try {
-          const response = await axios.get("http://localhost:3000/api/v1/light-sensor/latest");
-          const latestLight = parseFloat(response.data.data.value);
-          const min = parseFloat(lightMin);
-          const max = parseFloat(lightMax);
-    
-          console.log("Ánh sáng đo:", latestLight, "| Ngưỡng:", min, "-", max);
-    
-          if (latestLight >= min && latestLight <= max) {
-            await axios.post("http://localhost:3000/api/v1/turnOnLight", { value: 1 });
-            console.log("Ánh sáng phù hợp, đã bật đèn!");
-          } else {
-            await axios.post("http://localhost:3000/api/v1/turnOnLight", { value: 0 });
-            console.log("Ánh sáng không phù hợp, đã tắt đèn.");
-          }
-        } catch (error) {
-          console.error("Error checking light:", error.message);
-        }
-      };
-    
-      checkLightAndControl(); // gọi lần đầu
-    
-      const interval = setInterval(() => {
-        checkLightAndControl();
-      }, 30000); // gọi lại mỗi 30 giây
-    
-      return () => clearInterval(interval);
-    }, [lightMin, lightMax, lightMode]);
-    
-    
-    useEffect(() => {
-      const fetchMoistureThreshold = async () => {
-        try {
-          const response = await axios.get("http://localhost:3000/api/v1/moisture-threshold/latest");
-    
-          const { min, max } = response.data.data; // chính xác 100%
-    
-          if (min !== undefined && max !== undefined) {
-            setMoistureMin(min);
-            setMoistureMax(max);
-            console.log("Loaded moisture threshold:", min, max);
-          }
-        } catch (error) {
-          console.error("Error fetching moisture threshold:", error.message);
-        }
-      };
-    
-      fetchMoistureThreshold();
-    }, []);
-    
-    useEffect(() => {
-      const fetchLightThreshold = async () => {
-        try {
-          const response = await axios.get("http://localhost:3000/api/v1/light-threshold/latest");
-    
-          const { min, max } = response.data.data;
-    
-          if (min !== undefined && max !== undefined) {
-            setLightMin(min);
-            setLightMax(max);
-            console.log("Loaded light threshold:", min, max);
-          }
-        } catch (error) {
-          console.error("Error fetching light threshold:", error.message);
-        }
-      };
-    
-      fetchLightThreshold();
-    }, []);
-    const saveLightThreshold = async () => {
-      try {
-        await axios.post("http://localhost:3000/api/v1/light-threshold", {
-          min: lightMin,
-          max: lightMax,
-        });
-    
-        console.log("Saved light threshold successfully");
-        setShowLightModal(false); // Đóng modal sau khi lưu
-      } catch (error) {
-        console.error("Error saving light threshold:", error.message);
-      }
-    };
-    const saveMoistureThreshold = async () => {
-      try {
-        await axios.post("http://localhost:3000/api/v1/moisture-threshold", {
-          min: moistureMin,
-          max: moistureMax,
-        });
-    
-        console.log("Saved moisture threshold successfully");
-        setShowMoistureModal(false); // Đóng modal sau khi lưu
-      } catch (error) {
-        console.error("Error saving moisture threshold:", error.message);
-      }
-    };
-  
-  const sendPumpSpeedToServer = async (speed) => {
-    try {
-      const valueToSend = speed / 100; // vì pumpSpeed là phần trăm
-      await axios.post("http://localhost:3000/api/v1/turnOnPump", {
-        value: valueToSend
-      });
-      console.log("Sent pump speed:", valueToSend);
-    } catch (error) {
-      console.error("Error sending pump speed:", error.message);
-    }
-  };
-  
-  const sendLightIntensityToServer = async (intensity) => {
-    try {
-      const valueToSend = intensity / 100; // ví dụ 70% -> 0.7
-      await axios.post("http://localhost:3000/api/v1/turnOnLight", {
-        value: valueToSend
-      });
-      console.log("Sent light intensity:", valueToSend);
-    } catch (error) {
-      console.error("Error sending light intensity:", error.message);
-    }
-  };
-  const togglePump = async () => {
-    try {
-      const newPumpState = !pumpRunning; // trạng thái sau khi bật / tắt
-  
-      setPumpRunning(newPumpState);
-  
-      if (newPumpState) {
-        // Nếu đang bật => gửi API
-        const valueToSend = pumpSpeed / 100; // vì pumpSpeed là %, cần chia 100
-        await axios.post("http://localhost:3000/api/v1/turnOnPump", {
-          value: valueToSend
-        });
-        console.log("Sent pump speed:", valueToSend);
-      } else {
-        // Nếu tắt => gửi value = 0
-        await axios.post("http://localhost:3000/api/v1/turnOnPump", {
-          value: 0
-        });
-        console.log("Turned pump off");
-      }
-    } catch (error) {
-      console.error("Error toggling pump:", error.message);
-    }
-  };
-  const toggleLight = async () => {
-    try {
-      const newLightState = !lightOn;
-      setLightOn(newLightState);
-  
-      if (newLightState) {
-        // Nếu bật đèn
-        const valueToSend = lightIntensity / 100;
-        await axios.post("http://localhost:3000/api/v1/turnOnLight", {
-          value: valueToSend
-        });
-        console.log("Turned light ON:", valueToSend);
-      } else {
-        // Nếu tắt đèn
-        await axios.post("http://localhost:3000/api/v1/turnOnLight", {
-          value: 0
-        });
-        console.log("Turned light OFF");
-      }
-    } catch (error) {
-      console.error("Error toggling light:", error.message);
-    }
-  };
-  
-  const togglePumpMode = () => {
-    const newMode = pumpMode === "manual" ? "auto" : "manual";
-    setPumpMode(newMode);
-  };
-  const toggleLightMode = () => {
-    const newMode = lightMode === "manual" ? "auto" : "manual";
-    setLightMode(newMode);
-  };
-  {
-    /* Modal Cấu hình độ ẩm */
-
-  }
-  
-  const checkMoistureAndControlPump = async () => {
-    try {
-      const response = await axios.get("http://localhost:3000/api/v1/dht-moisure/latest");
-      const latestMoisture = parseFloat(response.data.data.value);
-  
-      const min = parseFloat(moistureMin);
-      const max = parseFloat(moistureMax);
-  
-      console.log("Độ ẩm đo:", latestMoisture, "| Ngưỡng:", min, "-", max);
-  
-      if (latestMoisture >= min && latestMoisture <= max) {
-        await axios.post("http://localhost:3000/api/v1/turnOnPump", { value: 1 });
-        console.log("Trong ngưỡng → Bật bơm");
-      } else {
-        await axios.post("http://localhost:3000/api/v1/turnOnPump", { value: 0 });
-        console.log("Ngoài ngưỡng → Tắt bơm");
-      }
-    } catch (error) {
-      console.error("Error checking moisture:", error.message);
-    }
-  };
-  
+    setMoistureMin,
+    setMoistureMax,
+    setLightMin,
+    setLightMax,
+    setShowMoistureModal,
+    setShowLightModal,
+  } = useDevice();
 
   return (
     <div className="flex min-h-screen">
@@ -433,7 +165,9 @@ const handlePumpSpeedChange = (newSpeed) => {
                     min="0"
                     max="100"
                     value={pumpSpeed}
-                    onChange={(e) => handlePumpSpeedChange(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handlePumpSpeedChange(parseInt(e.target.value))
+                    }
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
                     disabled={!pumpRunning || pumpMode === "auto"}
                   />
@@ -550,9 +284,9 @@ const handlePumpSpeedChange = (newSpeed) => {
                     min="0"
                     max="100"
                     value={lightIntensity}
-                    onChange={(e) => handleLightIntensityChange(parseInt(e.target.value))}
-
-                    
+                    onChange={(e) =>
+                      handleLightIntensityChange(parseInt(e.target.value))
+                    }
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                     disabled={!lightOn || lightMode === "auto"}
                   />
@@ -631,13 +365,12 @@ const handlePumpSpeedChange = (newSpeed) => {
                 className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
-                <button
-      onClick={saveMoistureThreshold}
-      className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
-    >
-      Lưu
-    </button>
-
+            <button
+              onClick={saveMoistureThreshold}
+              className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
+            >
+              Lưu
+            </button>
           </div>
         </Modal>
 
@@ -671,8 +404,8 @@ const handlePumpSpeedChange = (newSpeed) => {
               />
             </div>
             <button
-            onClick={saveLightThreshold}
-            className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
+              onClick={saveLightThreshold}
+              className="mt-4 w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
             >
               Lưu
             </button>

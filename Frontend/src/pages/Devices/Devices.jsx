@@ -86,7 +86,7 @@ const Devices = () => {
     },
     soil: {
       title: "Độ ẩm đất",
-      lineColor: "rgb(34, 197, 94)",
+      lineColor: "rgb(34, 197, 92)",
       yAxisLabel: "%",
     },
   };
@@ -94,21 +94,6 @@ const Devices = () => {
   if (loading && Object.values(data).every((sensor) => sensor.value === 0)) {
     return <Loading />;
   }
-  // if (error) {
-  //   return (
-  //     <div className="flex min-h-screen justify-center items-center">
-  //       <div className="bg-red-100 p-4 rounded-lg">
-  //         <p className="text-red-700">Lỗi: {error}</p>
-  //         <button
-  //           onClick={refreshData}
-  //           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-  //         >
-  //           Thử lại
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="flex min-h-screen">
