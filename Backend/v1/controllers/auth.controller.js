@@ -1,7 +1,7 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const JWT_SECRET = process.env.JWT_SECRET; // Lấy JWT_SECRET từ biến môi trường
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports.register = async (req, res) => {
   const {
@@ -55,7 +55,7 @@ module.exports.login = async (req, res) => {
     );
     res.status(200).json({ message: "Login successful", user, token });
   } catch (error) {
-    console.log("Login error:", error); // Log ra console để dễ debug
+    console.log("Login error:", error);
     res.status(500).json({ message: "Login failed", error });
   }
 };

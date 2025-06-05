@@ -10,16 +10,19 @@ import { useSensorData } from "../../hooks/useSensorData";
 const Devices = () => {
   const [selectedChart, setSelectedChart] = useState("temperature");
   const { data, chartData, loading, error, refreshData } = useSensorData();
+
   const { temperature, moisture, light, soil } = data;
-  const generateMockData = (baseValue, variance, length) => {
-    return Array.from({ length }, (_, i) => {
-      const hour = i % 24;
-      const timeInfluence =
-        Math.sin((hour / 24) * Math.PI * 2) * variance * 0.5;
-      const randomness = (Math.random() - 0.5) * variance;
-      return Math.round(baseValue + timeInfluence + randomness);
-    });
-  };
+  console.log(
+    "light:",
+
+    light.value,
+    "moi:",
+    moisture.value,
+    "temp:",
+    temperature.value,
+    "soil:",
+    soil.value
+  );
 
   const cards = [
     {

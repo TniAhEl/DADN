@@ -9,7 +9,6 @@ module.exports.index = async (req, res) => {
   });
 };
 
-// ✅ Thêm hàm xử lý tạo mới:
 module.exports.create = async (req, res) => {
   try {
     const { title, date } = req.body;

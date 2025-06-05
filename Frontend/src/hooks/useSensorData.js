@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { fetchSensorData, fetchChartData } from "../services/sensorService";
-export const useSensorData = (refreshInterval = 60000) => {
+
+export const useSensorData = () => {
   const [data, setData] = useState({
-    temperature: { value: 0, feedId: "", createdAt: new Date() },
-    moisture: { value: 0, feedId: "", createdAt: new Date() },
-    light: { value: 0, feedId: "", createdAt: new Date() },
-    soil: { value: 0, feedId: "", createdAt: new Date() },
+    temperature: { value: 0, feedId: "", createdAt: "" },
+    moisture: { value: 0, feedId: "", createdAt: "" },
+    light: { value: 0, feedId: "", createdAt: "" },
+    soil: { value: 0, feedId: "", createdAt: "" },
   });
 
   const [chartData, setChartData] = useState({
@@ -18,32 +19,33 @@ export const useSensorData = (refreshInterval = 60000) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const refreshData = async () => {
+  const fetchAllData = async () => {
     try {
       setLoading(true);
-      const sensorData = await fetchSensorData();
-      setData(sensorData);
-
-      const charts = await fetchChartData();
-      setChartData(charts);
-
+      const [sensor, chart] = await Promise.all([
+        fetchSensorData(),
+        fetchChartData(),
+      ]);
+      setData(sensor);
+      setChartData(chart);
       setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error("Error in useSensorData:", err);
+      setError(err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    refreshData();
+    fetchAllData();
 
-    const intervalId = setInterval(() => {
-      refreshData();
-    }, refreshInterval);
+    const interval = setInterval(() => {
+      fetchAllData();
+    }, 10000);
 
-    return () => clearInterval(intervalId);
-  }, [refreshInterval]);
+    return () => clearInterval(interval);
+  }, []);
 
-  return { data, chartData, loading, error, refreshData };
+  return { data, chartData, loading, error, refreshData: fetchAllData };
 };

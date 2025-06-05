@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import axios from "axios";
 
 const DeviceContext = createContext();
@@ -14,15 +20,21 @@ export const useDevice = () => {
 export const DeviceProvider = ({ children }) => {
   // trạng thái bơm
   const [pumpRunning, setPumpRunning] = useState(false);
-  const [pumpSpeed, setPumpSpeed] = useState(null);
+  const [pumpSpeed, setPumpSpeed] = useState(() => {
+    const saved = localStorage.getItem("pumpSpeed");
+    return saved !== null ? parseInt(saved) : 50;
+  });
   const [pumpMode, setPumpMode] = useState("manual");
-  const [pumpDebounceTimer, setPumpDebounceTimer] = useState(null);
+  // const [pumpDebounceTimer, setPumpDebounceTimer] = useState(null);
 
   // trạng thái đèn
   const [lightOn, setLightOn] = useState(false);
-  const [lightIntensity, setLightIntensity] = useState(null);
+  const [lightIntensity, setLightIntensity] = useState(() => {
+    const saved = localStorage.getItem("lightIntensity");
+    return saved !== null ? parseInt(saved) : 50;
+  });
   const [lightMode, setLightMode] = useState("manual");
-  const [lightDebounceTimer, setLightDebounceTimer] = useState(null);
+  // const [lightDebounceTimer, setLightDebounceTimer] = useState(null);
 
   // ngưỡng độ ẩm và ánh sáng
   // Mặc định là 30-70% độ ẩm và 10-80% ánh sáng
@@ -35,6 +47,10 @@ export const DeviceProvider = ({ children }) => {
   const [showMoistureModal, setShowMoistureModal] = useState(false);
   const [showLightModal, setShowLightModal] = useState(false);
 
+  // Tham chiếu để lưu debounce timer
+  const pumpDebounceTimerRef = useRef(null); // timer cho bơm
+  const lightDebounceTimerRef = useRef(null); // timer cho đèn
+
   // Hàm gọi API để lấy trạng thái bơm
   const fetchPumpStatus = async () => {
     try {
@@ -43,10 +59,10 @@ export const DeviceProvider = ({ children }) => {
 
       if (value > 0) {
         setPumpRunning(true);
+        setPumpSpeed(Math.round(value * 100));
       } else {
         setPumpRunning(false);
       }
-      setPumpSpeed(Math.round(value * 100)); // 0.3 --> 30%, 1 --> 100%
     } catch (error) {
       console.error("Error fetching pump status:", error.message);
     }
@@ -59,10 +75,10 @@ export const DeviceProvider = ({ children }) => {
 
       if (value > 0) {
         setLightOn(true);
+        setLightIntensity(Math.round(value * 100));
       } else {
         setLightOn(false);
       }
-      setLightIntensity(Math.round(value * 100));
     } catch (error) {
       console.error("Error fetching light status:", error.message);
     }
@@ -136,12 +152,12 @@ export const DeviceProvider = ({ children }) => {
         await axios.post("http://localhost:3000/api/v1/turnOnPump", {
           value: valueToSend,
         });
-        console.log("Sent pump speed:", valueToSend);
+        console.log("Turn PUMP Sent pump speed:", valueToSend);
       } else {
         await axios.post("http://localhost:3000/api/v1/turnOnPump", {
           value: 0,
         });
-        console.log("Turned pump off");
+        console.log("Turned pump OFF");
       }
     } catch (error) {
       console.error("Error toggling pump:", error.message);
@@ -182,35 +198,36 @@ export const DeviceProvider = ({ children }) => {
 
   const handlePumpSpeedChange = (newSpeed) => {
     setPumpSpeed(newSpeed);
+    localStorage.setItem("pumpSpeed", newSpeed);
+    // Nếu đang ở chế độ auto, không cần gửi lệnh
+    console.log("Pump speed changed to:", newSpeed);
 
-    if (pumpDebounceTimer) {
-      clearTimeout(pumpDebounceTimer);
+    if (pumpDebounceTimerRef.current) {
+      clearTimeout(pumpDebounceTimerRef.current);
     }
 
-    const timer = setTimeout(() => {
+    pumpDebounceTimerRef.current = setTimeout(() => {
       if (pumpMode === "manual" && pumpRunning) {
-        // Chỉ gửi tốc độ bơm nếu đang ở chế độ thủ công và bơm đang chạy
         sendPumpSpeedToServer(newSpeed);
       }
     }, 2000);
-
-    setPumpDebounceTimer(timer);
   };
 
   const handleLightIntensityChange = (newIntensity) => {
     setLightIntensity(newIntensity);
+    localStorage.setItem("lightIntensity", newIntensity);
+    // Nếu đang ở chế độ auto, không cần gửi lệnh
+    console.log("Light intensity changed to:", newIntensity);
 
-    if (lightDebounceTimer) {
-      clearTimeout(lightDebounceTimer);
+    if (lightDebounceTimerRef.current) {
+      clearTimeout(lightDebounceTimerRef.current);
     }
 
-    const timer = setTimeout(() => {
+    lightDebounceTimerRef.current = setTimeout(() => {
       if (lightMode === "manual" && lightOn) {
         sendLightIntensityToServer(newIntensity);
       }
     }, 2000);
-
-    setLightDebounceTimer(timer);
   };
 
   const saveMoistureThreshold = async () => {
